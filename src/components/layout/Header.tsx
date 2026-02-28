@@ -53,6 +53,9 @@ export default function Header() {
     }
 
     const handleLogout = async () => {
+        // Clear location session so it asks again on next login
+        sessionStorage.removeItem("userLocation");
+        sessionStorage.removeItem("locationPromptDone");
         await signOut(auth);
         router.push("/landing");
     };

@@ -200,7 +200,7 @@ export default function RideForm() {
 
             <div className="space-y-2">
                 <Label>Select Location on Map</Label>
-                <div className={`border-2 rounded-lg overflow-hidden ${selectingMode !== 'NONE' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-transparent'}`}>
+                <div className={`border-2 rounded-lg overflow-hidden ${selectingMode !== 'NONE' ? 'border-blue-500 ring-2 ring-blue-200 cursor-crosshair' : 'border-transparent'}`}>
                     <MapView
                         onLocationSelect={handleMapClick}
                         markers={markers as any}

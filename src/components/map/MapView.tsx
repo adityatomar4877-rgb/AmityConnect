@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -19,7 +19,6 @@ const customIcon = L.icon({
     shadowSize: [41, 41],
 });
 
-// Animated blue dot for "You are here"
 const userLocationIcon = L.divIcon({
     className: "",
     html: `
@@ -33,6 +32,25 @@ const userLocationIcon = L.divIcon({
     iconAnchor: [18, 18],
     popupAnchor: [0, -22],
 });
+
+// Flies to new center when props change
+function MapRecenter({ center, zoom }: { center: [number, number]; zoom: number }) {
+    const map = useMap();
+    useEffect(() => {
+        map.flyTo(center, zoom, { animate: true, duration: 1.5 });
+    }, [center[0], center[1], zoom]);
+    return null;
+}
+
+// Fires onLocationSelect when user clicks/taps the map
+function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
+    useMapEvents({
+        click(e) {
+            onLocationSelect(e.latlng.lat, e.latlng.lng);
+        },
+    });
+    return null;
+}
 
 interface MarkerData {
     id: string;
@@ -76,6 +94,9 @@ const MapView = ({
             scrollWheelZoom={false}
             className="h-[400px] w-full rounded-lg z-0"
         >
+            <MapRecenter center={center} zoom={zoom} />
+            {onLocationSelect && <MapClickHandler onLocationSelect={onLocationSelect} />}
+
             <TileLayer
                 attribution='&copy; <a href="https://www.google.com/maps">Google Maps</a>'
                 url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
@@ -86,7 +107,7 @@ const MapView = ({
                     <Marker key={marker.id} position={marker.position} icon={userLocationIcon}>
                         <Popup>
                             <div style={{ textAlign: "center" }}>
-                                <p style={{ fontWeight: "bold", color: "#3b82f6" }}>You are here</p>
+                                <p style={{ fontWeight: "bold", color: "#3b82f6" }}>📍 You are here</p>
                                 <p style={{ fontSize: "11px", color: "#6b7280", marginTop: "4px" }}>
                                     {marker.position[0].toFixed(5)}, {marker.position[1].toFixed(5)}
                                 </p>

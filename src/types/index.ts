@@ -42,6 +42,22 @@ export interface UserProfile {
     lastActive?: Timestamp | string; // For online status
     location?: { lat: number; lng: number }; // User's saved location
     locationUpdatedAt?: Timestamp | string;
+    // Rating
+    ratingSum?: number;
+    ratingCount?: number;
+    averageRating?: number;
+}
+
+export interface RideRating {
+    id?: string;
+    rideId: string;
+    raterId: string;
+    raterName: string;
+    raterPhoto?: string;
+    ratedUserId: string;
+    rating: number; // 1-5
+    comment?: string;
+    createdAt: Timestamp | string;
 }
 
 export interface Follow {
@@ -84,8 +100,22 @@ export interface Ride {
     departureTime: Timestamp | string;
     seatsAvailable?: number;
     availableSeats?: number;
-    status: 'OPEN' | 'FILLED' | 'CANCELLED';
+    status: 'OPEN' | 'FILLED' | 'EN_ROUTE' | 'COMPLETED' | 'CANCELLED';
+    passengerIds?: string[];
     createdAt: Timestamp | string;
+}
+
+export interface RideRequest {
+    id?: string;
+    rideId: string;
+    passengerId: string;
+    passengerName: string;
+    passengerPhoto?: string;
+    hostId: string;
+    status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED';
+    message?: string;
+    createdAt: Timestamp | string;
+    updatedAt?: Timestamp | string;
 }
 
 export interface Errand {

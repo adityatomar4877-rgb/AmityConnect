@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -32,10 +32,10 @@ export default function LocationPermissionModal({ onComplete }: LocationPermissi
                 const { latitude, longitude } = position.coords;
                 try {
                     if (user) {
-                        await updateDoc(doc(db, "users", user.uid), {
+                        await setDoc(doc(db, "users", user.uid), {
                             location: { lat: latitude, lng: longitude },
                             locationUpdatedAt: new Date(),
-                        });
+                        }, { merge: true });
                     }
                     // Save to sessionStorage so map can use it immediately
                     sessionStorage.setItem("userLocation", JSON.stringify({ lat: latitude, lng: longitude }));

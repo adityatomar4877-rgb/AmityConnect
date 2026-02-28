@@ -22,6 +22,7 @@ import Link from "next/link";
 import { UserProfile } from "@/types";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
+import RatingDisplay, { RatingSummary } from "@/components/rides/RatingDisplay";
 import { toast } from "sonner";
 
 // Social link icons and labels
@@ -504,6 +505,10 @@ export default function ProfilePage() {
                                     <p className="text-sm text-muted-foreground">Errands</p>
                                 </div>
                             </div>
+                            {/* Rating Summary */}
+                            <div className="pt-1">
+                                <RatingSummary ratingSum={profile.ratingSum} ratingCount={profile.ratingCount} />
+                            </div>
                         </div>
                     </div>
                 </CardContent>
@@ -628,6 +633,23 @@ export default function ProfilePage() {
 
             {/* Badges & Activity Stats */}
             <ProfileBadges profile={profile} />
+
+            {/* Ratings & Reviews */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        ⭐ Ratings & Reviews
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <RatingDisplay
+                        userId={userId}
+                        ratingSum={profile.ratingSum}
+                        ratingCount={profile.ratingCount}
+                        showReviews={true}
+                    />
+                </CardContent>
+            </Card>
 
             {/* Message Modal */}
             {showMessageModal && (

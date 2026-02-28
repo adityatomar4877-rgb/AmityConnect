@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Car, ShoppingBag, AlertTriangle, Sparkles, ArrowRight, Loader2, Shield } from "lucide-react";
+import { Car, ShoppingBag, AlertTriangle, Sparkles, ArrowRight, Loader2, Shield, MapPin, MapPinOff } from "lucide-react";
 import Link from "next/link";
 import DashboardMap from "@/components/map/DashboardMap";
 import LocationPermissionModal from "@/components/location/LocationPermissionModal";
@@ -19,6 +19,24 @@ export default function Home() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationEnabled, setLocationEnabled] = useState(false);
+
+  const handleToggleLocation = async () => {
+    if (locationEnabled) {
+      // Turn OFF — clear state, sessionStorage, and Firestore
+      setUserLocation(null);
+      setLocationEnabled(false);
+      sessionStorage.removeItem("userLocation");
+      sessionStorage.setItem("locationPromptDone", "true");
+      if (user) {
+        await setDoc(doc(db, "users", user.uid), { location: null }, { merge: true });
+      }
+    } else {
+      // Turn ON — ask for location again
+      sessionStorage.removeItem("locationPromptDone");
+      setShowLocationModal(true);
+    }
+  };
 
   useEffect(() => {
     // Redirect to landing page if not logged in
@@ -49,9 +67,10 @@ export default function Home() {
 
             if (sessionLoc) {
               setUserLocation(JSON.parse(sessionLoc));
+              setLocationEnabled(true);
             } else if (profile.location) {
-              // Use stored location from Firestore
               setUserLocation(profile.location);
+              setLocationEnabled(true);
               sessionStorage.setItem("userLocation", JSON.stringify(profile.location));
             } else if (!promptDone) {
               // No location saved & not skipped — ask for it
@@ -70,10 +89,10 @@ export default function Home() {
 
   const handleLocationModalComplete = () => {
     setShowLocationModal(false);
-    // Read from sessionStorage in case it was just saved
     const saved = sessionStorage.getItem("userLocation");
     if (saved) {
       setUserLocation(JSON.parse(saved));
+      setLocationEnabled(true);
     }
   };
 
@@ -191,10 +210,26 @@ export default function Home() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl sm:text-3xl font-bold">Live Campus Map</h2>
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-sm font-medium">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            Live
-          </span>
+          <div className="flex items-center gap-3">
+            {/* Location Toggle Button */}
+            <button
+              onClick={handleToggleLocation}
+              className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${locationEnabled
+                  ? "bg-blue-500/10 text-blue-600 border-blue-500/30 hover:bg-blue-500/20 dark:text-blue-400"
+                  : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                }`}
+            >
+              {locationEnabled ? (
+                <><MapPin className="h-4 w-4" /> Location ON</>
+              ) : (
+                <><MapPinOff className="h-4 w-4" /> Location OFF</>
+              )}
+            </button>
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-sm font-medium">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              Live
+            </span>
+          </div>
         </div>
         <div className="border-2 border-border rounded-2xl overflow-hidden shadow-lg">
           <DashboardMap userLocation={userLocation} />
