@@ -40,6 +40,8 @@ export interface UserProfile {
 
     createdAt?: Timestamp | string;
     lastActive?: Timestamp | string; // For online status
+    location?: { lat: number; lng: number }; // User's saved location
+    locationUpdatedAt?: Timestamp | string;
 }
 
 export interface Follow {

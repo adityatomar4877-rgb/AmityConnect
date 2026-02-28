@@ -5,7 +5,6 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix for default marker icon in Next.js
 const iconUrl = "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png";
 const iconRetinaUrl = "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png";
 const shadowUrl = "https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png";
@@ -20,23 +19,41 @@ const customIcon = L.icon({
     shadowSize: [41, 41],
 });
 
+// Animated blue dot for "You are here"
+const userLocationIcon = L.divIcon({
+    className: "",
+    html: `
+        <div style="position:relative;width:36px;height:36px;">
+            <div style="position:absolute;inset:0;background:rgba(59,130,246,0.25);border-radius:50%;animation:acPulse 2s infinite;"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:16px;height:16px;background:#3b82f6;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(59,130,246,0.7);"></div>
+        </div>
+        <style>@keyframes acPulse{0%,100%{transform:scale(1);opacity:0.6}50%{transform:scale(1.7);opacity:0.15}}</style>
+    `,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -22],
+});
+
+interface MarkerData {
+    id: string;
+    position: [number, number];
+    title: string;
+    description?: string;
+    isUser?: boolean;
+}
+
 interface MapViewProps {
     center?: [number, number];
     zoom?: number;
-    markers?: Array<{
-        id: string;
-        position: [number, number];
-        title: string;
-        description?: string;
-    }>;
+    markers?: MarkerData[];
     onLocationSelect?: (lat: number, lng: number) => void;
 }
 
 const MapView = ({
-    center = [26.2307, 78.1969], // Default: Amity University Madhya Pradesh Gwalior
-    zoom = 16, // Closer zoom for campus view
+    center = [26.2307, 78.1969],
+    zoom = 16,
     markers = [],
-    onLocationSelect
+    onLocationSelect,
 }: MapViewProps) => {
     const [isMounted, setIsMounted] = useState(false);
 
@@ -45,7 +62,11 @@ const MapView = ({
     }, []);
 
     if (!isMounted) {
-        return <div className="h-[400px] w-full bg-gray-100 animate-pulse flex items-center justify-center text-gray-500">Loading Map...</div>;
+        return (
+            <div className="h-[400px] w-full bg-gray-100 animate-pulse flex items-center justify-center text-gray-500">
+                Loading Map...
+            </div>
+        );
     }
 
     return (
@@ -57,23 +78,30 @@ const MapView = ({
         >
             <TileLayer
                 attribution='&copy; <a href="https://www.google.com/maps">Google Maps</a>'
-                url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" // lyrs=y is Hybrid (Satellite + Labels)
+                url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
             />
 
-            {markers.map((marker) => (
-                <Marker
-                    key={marker.id}
-                    position={marker.position}
-                    icon={customIcon}
-                >
-                    <Popup>
-                        <h3 className="font-bold">{marker.title}</h3>
-                        {marker.description && <p>{marker.description}</p>}
-                    </Popup>
-                </Marker>
-            ))}
-
-            {/* TODO: Add ClickHandler for onLocationSelect */}
+            {markers.map((marker) =>
+                marker.isUser ? (
+                    <Marker key={marker.id} position={marker.position} icon={userLocationIcon}>
+                        <Popup>
+                            <div style={{ textAlign: "center" }}>
+                                <p style={{ fontWeight: "bold", color: "#3b82f6" }}>You are here</p>
+                                <p style={{ fontSize: "11px", color: "#6b7280", marginTop: "4px" }}>
+                                    {marker.position[0].toFixed(5)}, {marker.position[1].toFixed(5)}
+                                </p>
+                            </div>
+                        </Popup>
+                    </Marker>
+                ) : (
+                    <Marker key={marker.id} position={marker.position} icon={customIcon}>
+                        <Popup>
+                            <h3 style={{ fontWeight: "bold" }}>{marker.title}</h3>
+                            {marker.description && <p>{marker.description}</p>}
+                        </Popup>
+                    </Marker>
+                )
+            )}
         </MapContainer>
     );
 };

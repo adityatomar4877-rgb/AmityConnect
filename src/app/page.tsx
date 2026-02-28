@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Car, ShoppingBag, AlertTriangle, Sparkles, ArrowRight, Loader2, Shield } from "lucide-react";
 import Link from "next/link";
 import DashboardMap from "@/components/map/DashboardMap";
+import LocationPermissionModal from "@/components/location/LocationPermissionModal";
 import { UserProfile } from "@/types";
 
 export default function Home() {
@@ -16,6 +17,8 @@ export default function Home() {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     // Redirect to landing page if not logged in
@@ -39,6 +42,21 @@ export default function Home() {
               router.push("/faculty");
               return;
             }
+
+            // Check if we already have location in session (page was refreshed)
+            const sessionLoc = sessionStorage.getItem("userLocation");
+            const promptDone = sessionStorage.getItem("locationPromptDone");
+
+            if (sessionLoc) {
+              setUserLocation(JSON.parse(sessionLoc));
+            } else if (profile.location) {
+              // Use stored location from Firestore
+              setUserLocation(profile.location);
+              sessionStorage.setItem("userLocation", JSON.stringify(profile.location));
+            } else if (!promptDone) {
+              // No location saved & not skipped — ask for it
+              setShowLocationModal(true);
+            }
           }
         } catch (error) {
           console.error("Error fetching profile:", error);
@@ -49,6 +67,15 @@ export default function Home() {
       fetchProfile();
     }
   }, [user, loading, router]);
+
+  const handleLocationModalComplete = () => {
+    setShowLocationModal(false);
+    // Read from sessionStorage in case it was just saved
+    const saved = sessionStorage.getItem("userLocation");
+    if (saved) {
+      setUserLocation(JSON.parse(saved));
+    }
+  };
 
   // Show loading while checking auth
   if (loading || profileLoading) {
@@ -66,6 +93,10 @@ export default function Home() {
 
   return (
     <div className="space-y-12">
+      {/* Location Permission Modal */}
+      {showLocationModal && (
+        <LocationPermissionModal onComplete={handleLocationModalComplete} />
+      )}
       {/* Hero Section with gradient background */}
       <section className="relative text-center space-y-6 py-16 px-4 rounded-3xl hero-gradient overflow-hidden">
         {/* Decorative elements */}
@@ -166,7 +197,7 @@ export default function Home() {
           </span>
         </div>
         <div className="border-2 border-border rounded-2xl overflow-hidden shadow-lg">
-          <DashboardMap />
+          <DashboardMap userLocation={userLocation} />
         </div>
       </section>
     </div>
