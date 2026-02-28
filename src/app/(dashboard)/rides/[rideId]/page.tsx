@@ -14,6 +14,7 @@ import { CheckCircle, XCircle, Clock, Car, MapPin, Calendar, Users, ArrowLeft, L
 import { format } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
+import { createNotification } from "@/lib/notifications";
 
 function parseDate(date: any): Date | null {
     if (!date) return null;
@@ -59,14 +60,32 @@ export default function RideDetailPage() {
                 seatsAvailable: increment(-1),
                 passengerIds: [...(ride.passengerIds || []), req.passengerId],
             });
+            await createNotification({
+                userId: req.passengerId,
+                type: "ride_accepted",
+                title: "Ride Request Accepted! 🎉",
+                description: `Your request for the ride to ${typeof ride.destination === "string" ? ride.destination : (ride.destination as any)?.name} was accepted.`,
+                link: `/rides/${ride.id}`,
+                senderName: ride.hostName,
+                senderPhoto: ride.hostPhoto,
+            });
             toast.success(`${req.passengerName} confirmed!`);
         } catch { toast.error("Failed to accept."); }
     };
 
     const handleReject = async (req: RideRequest) => {
-        if (!req.id) return;
+        if (!req.id || !ride) return;
         try {
             await updateDoc(doc(db, "rideRequests", req.id), { status: "REJECTED", updatedAt: serverTimestamp() });
+            await createNotification({
+                userId: req.passengerId,
+                type: "ride_rejected",
+                title: "Ride Request Declined",
+                description: `Your request for the ride to ${typeof ride.destination === "string" ? ride.destination : (ride.destination as any)?.name} was not accepted.`,
+                link: `/rides`,
+                senderName: ride.hostName,
+                senderPhoto: ride.hostPhoto,
+            });
             toast.info("Request rejected.");
         } catch { toast.error("Failed to reject."); }
     };
@@ -76,6 +95,44 @@ export default function RideDetailPage() {
         setUpdatingStatus(true);
         try {
             await updateDoc(doc(db, "rides", ride.id), { status, updatedAt: serverTimestamp() });
+
+            // Notify all confirmed passengers
+            const confirmed = requests.filter(r => r.status === "CONFIRMED");
+            const destName = typeof ride.destination === "string" ? ride.destination : (ride.destination as any)?.name;
+
+            for (const req of confirmed) {
+                if (status === "EN_ROUTE") {
+                    await createNotification({
+                        userId: req.passengerId,
+                        type: "ride_en_route",
+                        title: "Your Ride is On the Way! 🚗",
+                        description: `The driver is now en route to ${destName}. Get ready!`,
+                        link: `/rides/${ride.id}`,
+                        senderName: ride.hostName,
+                        senderPhoto: ride.hostPhoto,
+                    });
+                } else if (status === "COMPLETED") {
+                    await createNotification({
+                        userId: req.passengerId,
+                        type: "ride_completed",
+                        title: "Ride Completed — Rate Your Driver ⭐",
+                        description: `How was your ride to ${destName}? Leave a rating in Ride History.`,
+                        link: `/rides/history`,
+                        senderName: ride.hostName,
+                        senderPhoto: ride.hostPhoto,
+                    });
+                } else if (status === "CANCELLED") {
+                    await createNotification({
+                        userId: req.passengerId,
+                        type: "ride_cancelled",
+                        title: "Ride Cancelled",
+                        description: `The ride to ${destName} has been cancelled by the host.`,
+                        link: `/rides`,
+                        senderName: ride.hostName,
+                        senderPhoto: ride.hostPhoto,
+                    });
+                }
+            }
             toast.success(`Ride marked as ${status.toLowerCase()}.`);
         } catch { toast.error("Failed to update status."); }
         finally { setUpdatingStatus(false); }

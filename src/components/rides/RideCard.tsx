@@ -16,6 +16,7 @@ import {
     serverTimestamp, updateDoc, doc, increment
 } from "firebase/firestore";
 import { toast } from "sonner";
+import { createNotification } from "@/lib/notifications";
 
 interface RideCardProps {
     ride: Ride;
@@ -89,6 +90,17 @@ export default function RideCard({ ride }: RideCardProps) {
                 status: "PENDING",
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
+            });
+            // Notify host
+            await createNotification({
+                userId: ride.hostId,
+                type: "ride_request",
+                title: "New Ride Request",
+                description: `${user.displayName || "Someone"} wants to join your ride to ${typeof ride.destination === "string" ? ride.destination : ride.destination?.name}`,
+                link: `/rides/${ride.id}`,
+                senderId: user.uid,
+                senderName: user.displayName || "Anonymous",
+                senderPhoto: user.photoURL || "",
             });
             toast.success("Request sent! Waiting for the host to confirm.");
         } catch {
