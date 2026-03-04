@@ -11,6 +11,7 @@ import Link from "next/link";
 import { Plus, ShoppingBag, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
+import { createNotification } from "@/lib/notifications";
 
 // Helper to create a mock Timestamp for demo data
 const createMockTimestamp = (date: Date): Timestamp => {
@@ -117,7 +118,6 @@ export default function ErrandsPage() {
     const handleAccept = async (errandId: string) => {
         if (!user) return alert("Please login to accept errands");
 
-        // For demo data, update locally
         if (errandId.startsWith("demo-")) {
             setErrands(prev => prev.map(e =>
                 e.id === errandId ? { ...e, helperId: user.uid, status: "IN_PROGRESS" } : e
@@ -126,10 +126,24 @@ export default function ErrandsPage() {
         }
 
         try {
+            const errand = errands.find(e => e.id === errandId);
             await updateDoc(doc(db, "errands", errandId), {
                 helperId: user.uid,
+                helperName: user.displayName || "Anonymous",
                 status: 'IN_PROGRESS'
             });
+            if (errand) {
+                await createNotification({
+                    userId: errand.requesterId,
+                    type: "errand",
+                    title: "Someone accepted your errand! 🎉",
+                    description: `${user.displayName || "Someone"} is helping with: ${errand.title}`,
+                    link: "/errands",
+                    senderId: user.uid,
+                    senderName: user.displayName || "Anonymous",
+                    senderPhoto: user.photoURL || "",
+                });
+            }
         } catch (error) {
             console.error("Error accepting errand", error);
         }

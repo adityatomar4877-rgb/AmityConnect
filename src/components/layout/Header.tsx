@@ -17,7 +17,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, AlertTriangle, Shield, MessageCircle, Users } from "lucide-react";
+import { LogOut, User, AlertTriangle, Shield, MessageCircle, Users, BookOpen, Car } from "lucide-react";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { UserProfile } from "@/types";
 import SearchPeople from "@/components/search/SearchPeople";
@@ -81,6 +81,9 @@ export default function Header() {
                 <nav className="hidden lg:flex items-center gap-6">
                     <Link href="/rides" className="text-sm font-medium text-foreground/80 hover:text-primary">Ride Board</Link>
                     <Link href="/errands" className="text-sm font-medium text-foreground/80 hover:text-primary">Errands</Link>
+                    <Link href="/study" className="text-sm font-medium text-foreground/80 hover:text-primary flex items-center gap-1">
+                        <BookOpen size={16} /> Study
+                    </Link>
                     <Link href="/people" className="text-sm font-medium text-foreground/80 hover:text-primary flex items-center gap-1">
                         <Users size={16} /> People
                     </Link>
@@ -136,6 +139,18 @@ export default function Header() {
                                         <Link href={`/profile/${user.uid}`} className="flex items-center gap-2 cursor-pointer">
                                             <User size={16} />
                                             My Profile
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/rides/history" className="flex items-center gap-2 cursor-pointer">
+                                            <Car size={16} />
+                                            Ride History
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/study" className="flex items-center gap-2 cursor-pointer">
+                                            <BookOpen size={16} />
+                                            Study Groups
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>

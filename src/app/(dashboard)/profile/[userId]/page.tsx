@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
     User, Mail, Phone, GraduationCap, Building, Calendar,
@@ -55,6 +56,10 @@ export default function ProfilePage() {
     const [editedYear, setEditedYear] = useState("");
     const [editedEmergencyPhone, setEditedEmergencyPhone] = useState("");
     const [editedSocialLinks, setEditedSocialLinks] = useState<Record<string, string>>({});
+    const [editedSkills, setEditedSkills] = useState<string[]>([]);
+    const [editedInterests, setEditedInterests] = useState<string[]>([]);
+    const [skillInput, setSkillInput] = useState("");
+    const [interestInput, setInterestInput] = useState("");
 
     const isOwnProfile = currentUser?.uid === userId;
     const isFacultyViewing = currentUserProfile?.role === 'faculty' || currentUserProfile?.role === 'admin';
@@ -92,6 +97,8 @@ export default function ProfilePage() {
                     setEditedYear(data.year || "");
                     setEditedEmergencyPhone(data.emergencyPhone || "");
                     setEditedSocialLinks(data.socialLinks || {});
+                    setEditedSkills(data.skills || []);
+                    setEditedInterests(data.interests || []);
                 } else {
                     setProfile(null);
                 }
@@ -227,7 +234,9 @@ export default function ProfilePage() {
                 department: editedDepartment,
                 year: editedYear,
                 emergencyPhone: editedEmergencyPhone,
-                socialLinks: cleanedSocialLinks
+                socialLinks: cleanedSocialLinks,
+                skills: editedSkills,
+                interests: editedInterests,
             });
 
             setProfile(prev => prev ? {
@@ -509,6 +518,80 @@ export default function ProfilePage() {
                             <div className="pt-1">
                                 <RatingSummary ratingSum={profile.ratingSum} ratingCount={profile.ratingCount} />
                             </div>
+
+                            {/* Skills & Interests display */}
+                            {!isEditing && (profile.skills?.length || profile.interests?.length) ? (
+                                <div className="space-y-2 pt-1">
+                                    {profile.skills?.length ? (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {profile.skills.map(s => (
+                                                <span key={s} className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 text-xs font-medium">💡 {s}</span>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                    {profile.interests?.length ? (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {profile.interests.map(i => (
+                                                <span key={i} className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 text-xs font-medium">✨ {i}</span>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                </div>
+                            ) : null}
+
+                            {/* Skills/Interests edit */}
+                            {isEditing && (
+                                <div className="space-y-3 pt-1">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs">Skills (press Enter to add)</Label>
+                                        <div className="flex gap-2">
+                                            <Input placeholder="e.g., React, Python, Design..."
+                                                value={skillInput}
+                                                onChange={e => setSkillInput(e.target.value)}
+                                                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (skillInput.trim()) { setEditedSkills(p => [...new Set([...p, skillInput.trim()])]); setSkillInput(""); } } }}
+                                                className="h-8 text-xs" />
+                                            <Button type="button" size="sm" variant="outline" className="h-8 text-xs"
+                                                onClick={() => { if (skillInput.trim()) { setEditedSkills(p => [...new Set([...p, skillInput.trim()])]); setSkillInput(""); } }}>
+                                                Add
+                                            </Button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {editedSkills.map(s => (
+                                                <span key={s} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 text-xs">
+                                                    💡 {s}
+                                                    <button onClick={() => setEditedSkills(p => p.filter(x => x !== s))}>
+                                                        <X size={10} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs">Interests</Label>
+                                        <div className="flex gap-2">
+                                            <Input placeholder="e.g., Gaming, Music, AI..."
+                                                value={interestInput}
+                                                onChange={e => setInterestInput(e.target.value)}
+                                                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (interestInput.trim()) { setEditedInterests(p => [...new Set([...p, interestInput.trim()])]); setInterestInput(""); } } }}
+                                                className="h-8 text-xs" />
+                                            <Button type="button" size="sm" variant="outline" className="h-8 text-xs"
+                                                onClick={() => { if (interestInput.trim()) { setEditedInterests(p => [...new Set([...p, interestInput.trim()])]); setInterestInput(""); } }}>
+                                                Add
+                                            </Button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {editedInterests.map(i => (
+                                                <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 text-xs">
+                                                    ✨ {i}
+                                                    <button onClick={() => setEditedInterests(p => p.filter(x => x !== i))}>
+                                                        <X size={10} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </CardContent>

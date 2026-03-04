@@ -39,13 +39,14 @@ export interface UserProfile {
     totalActiveDays?: number;    // Total days active
 
     createdAt?: Timestamp | string;
-    lastActive?: Timestamp | string; // For online status
-    location?: { lat: number; lng: number }; // User's saved location
+    lastActive?: Timestamp | string;
+    location?: { lat: number; lng: number };
     locationUpdatedAt?: Timestamp | string;
-    // Rating
     ratingSum?: number;
     ratingCount?: number;
     averageRating?: number;
+    skills?: string[];
+    interests?: string[];
 }
 
 export interface RideRating {
@@ -148,4 +149,45 @@ export interface EmergencyAlert {
     resolvedAt?: any;
     resolvedBy?: string;
     createdAt: Timestamp;
+}
+
+export type ErrandCategory =
+    | 'Food' | 'Stationery' | 'Medicine' | 'Printing'
+    | 'Library' | 'Transport' | 'Other';
+
+export interface StudyGroup {
+    id?: string;
+    hostId: string;
+    hostName: string;
+    hostPhoto?: string;
+    subject: string;
+    description: string;
+    topic: string;
+    maxMembers: number;
+    memberIds: string[];
+    memberNames?: string[];
+    tags: string[];
+    meetingType: 'Online' | 'In-Person';
+    location?: string;
+    scheduledAt?: Timestamp | string;
+    status: 'OPEN' | 'FULL' | 'CLOSED';
+    createdAt: Timestamp | string;
+}
+
+export interface RecurringRide {
+    id?: string;
+    hostId: string;
+    hostName: string;
+    hostPhoto?: string;
+    type: 'OFFER' | 'REQUEST';
+    origin: string;
+    destination: string;
+    originGeo?: GeoPoint;
+    destinationGeo?: GeoPoint;
+    departureTime: string; // HH:MM
+    days: string[]; // ['MON','WED','FRI']
+    seatsAvailable?: number;
+    status: 'ACTIVE' | 'PAUSED' | 'STOPPED';
+    subscriberIds: string[];
+    createdAt: Timestamp | string;
 }
